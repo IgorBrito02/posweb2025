@@ -2,6 +2,10 @@ from pymongo import MongoClient
 
 from config import MONGO_URL, MONGO_DB, MONGO_COLLECTION
 
+from models import Cliente, Produto, Venda
+from sqlalchemy import func
+from models import db
+
 try:
     client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=2000)
     client.server_info()
@@ -45,3 +49,56 @@ def obter_dashboard_total():
         doc = dashboard_collection.find_one({"_id": "total_clientes"})
         return doc["total"] if doc else 0
     return 0
+
+# ========== Dashboard Geral ==========
+
+def registrar_dashboard_info():
+    if not mongo_connected:
+        print("[MongoDB] Ignorado: sem conexão")
+        return
+
+    # Total de clientes
+    total_clientes = db.session.query(func.count(Cliente.id_cliente)).scalar()
+
+    # Total de produtos
+    total_produtos = db.session.query(func.count(Produto.id_produto)).scalar()
+
+    # Total de vendas
+    total_vendas = db.session.query(func.count(Venda.id_pedido)).scalar()
+
+    # Produto mais vendido
+    produto_mais_vendido = (
+        db.session.query(
+            Produto.nome,
+            func.count(Venda.id_produto).label("total_vendas")
+        )
+        .join(Venda, Produto.id_produto == Venda.id_produto)
+        .group_by(Produto.id_produto)
+        .order_by(func.count(Venda.id_produto).desc())
+        .first()
+    )
+
+    if produto_mais_vendido:
+        nome_produto_mais_vendido = produto_mais_vendido[0]
+        quantidade_vendida = produto_mais_vendido[1]
+    else:
+        nome_produto_mais_vendido = None
+        quantidade_vendida = 0
+
+    # Documento consolidado
+    dashboard_data = {
+        "_id": "dashboard_geral",
+        "total_clientes": total_clientes,
+        "total_produtos": total_produtos,
+        "total_vendas": total_vendas,
+        "produto_mais_vendido": {
+            "nome": nome_produto_mais_vendido,
+            "quantidade": quantidade_vendida
+        }
+    }
+
+    dashboard_collection.update_one(
+        {"_id": "dashboard_geral"},
+        {"$set": dashboard_data},
+        upsert=True
+    )
