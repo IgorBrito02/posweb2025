@@ -1,10 +1,10 @@
 from pymongo import MongoClient
 
-from config import MONGO_URL, MONGO_DB, MONGO_COLLECTION
+from app.config import MONGO_URL, MONGO_DB, MONGO_COLLECTION
 
-from models import Cliente, Produto, Venda
+from app.models import Cliente, Produto, Venda
 from sqlalchemy import func
-from models import db
+from app.models import db
 
 try:
     client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=2000)

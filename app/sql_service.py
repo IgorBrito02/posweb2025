@@ -1,5 +1,5 @@
 from datetime import datetime
-from models import Cliente, db, Produto, Venda
+from app.models import Cliente, db, Produto, Venda
 
 
 def criar_cliente(nome, email, cpf, data_nascimento):
@@ -77,7 +77,6 @@ def deletar_produto(id):
 def criar_venda(id_cliente, id_produto, valor_total):
 
     venda = Venda(id_cliente=id_cliente, id_produto=id_produto, valor_total=valor_total)
-    #produto.estoque -= quantidade  # baixa no estoque
     db.session.add(venda)
     db.session.commit()
     return venda

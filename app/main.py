@@ -1,11 +1,11 @@
 from flask import Flask, jsonify, request
 from sqlalchemy.orm import joinedload
 
-import sql_service
-from nosql_service import obter_dashboard_total, registrar_dashboard_total, registrar_dashboard_info, obter_documento
-from models import db, Cliente, Venda, Produto
-from sql_service import criar_cliente, obter_cliente, listar_clientes, atualizar_cliente, deletar_cliente, listar_produtos, criar_produto, deletar_produto
-from config import SQLALCHEMY_DATABASE_URI
+from app import sql_service
+from app.nosql_service import obter_dashboard_total, registrar_dashboard_total, registrar_dashboard_info, obter_documento
+from app.models import db, Cliente, Venda, Produto
+from app.sql_service import criar_cliente, obter_cliente, listar_clientes, atualizar_cliente, deletar_cliente, listar_produtos, criar_produto, deletar_produto
+from app.config import SQLALCHEMY_DATABASE_URI
 
 app = Flask(__name__)
 
