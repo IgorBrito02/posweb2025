@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, request
 from sqlalchemy.orm import joinedload
 
-from app import sql_service
-from app.nosql_service import obter_dashboard_total, registrar_dashboard_total, registrar_dashboard_info, obter_documento
-from models import db, Cliente, Venda
+import sql_service
+from nosql_service import obter_dashboard_total, registrar_dashboard_total, registrar_dashboard_info, obter_documento
+from models import db, Cliente, Venda, Produto
 from sql_service import criar_cliente, obter_cliente, listar_clientes, atualizar_cliente, deletar_cliente, listar_produtos, criar_produto, deletar_produto
 from config import SQLALCHEMY_DATABASE_URI
 
@@ -104,6 +104,20 @@ def post_produto():
     
     return jsonify({"id": produto.id_produto}), 201
 
+@app.route('/produtos/<int:id>', methods=['PUT'])
+def atualizar_produto(id):
+    produto = Produto.query.get_or_404(id)
+    dados = request.get_json()
+
+    produto.nome = dados.get('nome', produto.nome)
+    produto.preco = dados.get('preco', produto.preco)
+    produto.descricao = dados.get('descricao', produto.descricao)
+    produto.categoria = dados.get('categoria', produto.categoria)
+
+    db.session.commit()
+    registrar_dashboard_info()
+    return jsonify({'mensagem': 'Produto atualizado com sucesso'})
+
 @app.route("/produtos/<int:produto_id>", methods=["DELETE"])
 def deletar_produto_route(produto_id):
     produto = deletar_produto(produto_id)
@@ -152,15 +166,17 @@ def post_venda():
 def obter_venda_route(id_pedido):
     venda = sql_service.obter_venda(id_pedido)
     if not venda:
-        return jsonify({
-            "id": venda.id_pedido,
-            "data_pedido": venda.data_pedido.strftime("%d-%m-%Y %H:%M"),
-            "cliente": venda.cliente.nome if venda.cliente else None,
-            "id_produto": venda.id_produto,
-            "produto": venda.produto.nome if venda.produto else None,
-            "valor_total": venda.valor_total
-        })
-        
+        return jsonify({"erro": "Venda não encontrada"}), 404
+
+    return jsonify({
+        "id": venda.id_pedido,
+        "data_pedido": venda.data_pedido.strftime("%d-%m-%Y %H:%M"),
+        "cliente": venda.cliente.nome if venda.cliente else None,
+        "id_produto": venda.id_produto,
+        "produto": venda.produto.nome if venda.produto else None,
+        "valor_total": venda.valor_total
+    })
+
 @app.route("/vendas/<int:id_pedido>", methods=["PUT"])
 def atualizar_venda_route(id_pedido):
     data = request.json
